@@ -1,7 +1,13 @@
 # compiled object files
 *.o
+*.out
+
+#
+
 # the linked binary
 jsh
+minigrep
+
 # gedit backup files
 *~
 *.*~*

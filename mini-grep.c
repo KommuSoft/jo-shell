@@ -15,12 +15,15 @@ int option(char *s);
 int getLine(char s[]);
 int strindex(char *s, char *p, char *r[]);
 void printmatch(char *s, long no, char *p, char *i[], int n);
+void compile_failuretable (char *w, int* t);
 
 /*
  * Print all lines of stdin, matching a specified pattern.
  * Return number of matching lines.
  */
 int main(int argc, char *argv[]) {
+
+
 	char line[MAXLINE];
 	char *index[MAXLINE];	//array of pointers to pattern substrings
 	char *pattern;		//pattern to search for
@@ -117,13 +120,41 @@ int getLine(char line[]) {
 	return i;
 }
 
+
+void compile_failuretable (char *w, int* t) {
+    if(*w != '\0') {
+        char wpr = *(w+0x01);
+        char* wp = w+0x02;
+        int c = 0, p = 0;
+        char wcc;
+        *t = -1; t++;
+        *t = 0; t++;
+        for(; *wp != '\0'; ) {
+            wcc = *(w+c);
+            if(wpr == wcc) {
+                c++;
+                *t++ = c;
+                wpr = *wp++;
+            }
+            else if(c > 0) {
+                c = *(t+c);
+            } else {
+                *t++ = 0;
+                wpr = *wp++;
+            }
+        }
+    }
+}
+
 /*
  * strindex: store in r pointers to all occurences of p in s
  * return number of matches
  */
 int strindex(char *s, char *p, char *r[]) {
 	int j, n = 0;
-	for (; *s != '\0'; s++) {
+	char* sm = s;
+	char* smi = s;
+	for (; *smi != '\0'; s++) {
 		for(j = 0; *(p+j) != '\0' && *(s+j) == *(p+j); j++)
 			;
 		if (j > 0 && *(p+j) == '\0') { // we have a full match
@@ -138,10 +169,12 @@ int strindex(char *s, char *p, char *r[]) {
  * printmatch: print (in color) a null-terminated string s with line number no,
  * containing n pattern matches, specified by the index array.
  */
-void printmatch(char *s, long no, char *pattern, char *index[], int n) {
+void printmatch(char *s, long no, char *pattern, int* btr, char *index[], int n) {
 	if (NUMBER)
 		printf("%ld: ", no);
-
+	
+	int patl = strlen(pattern)-0x01;
+		
 	for(; *s != '\0'; s++)
 		if( s == *index && n > 0) { // we have a pattern match
 			if (isatty(fileno(stdout)))
@@ -149,7 +182,7 @@ void printmatch(char *s, long no, char *pattern, char *index[], int n) {
 			else
 				printf("%s", pattern);
 			index++;
-			s += strlen(pattern) - 1;
+			s += patl;
 			n--;
 		}
 		else
